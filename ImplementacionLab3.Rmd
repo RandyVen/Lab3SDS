@@ -1,0 +1,87 @@
+---
+title: "ImplementacionLab3"
+author: "Randy Venegas & Alfredo Quezada"
+date: '2023-03-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploracion de datos
+
+
+
+```{r}
+
+db<-read.csv('VirusSample.csv')
+
+```
+
+A continuacion se realizaran las implementaciones correspondientes 
+
+
+```{r message=FALSE, warning=FALSE}
+# SVM 
+library(e1071)
+library(caret)
+
+db$class<-as.factor(db$class)
+db$file<-as.factor(db$file)
+db$api<-as.factor(db$api)
+porcentaje<-0.7
+
+#Datos de entrenamiento y prueba
+corte <- sample(nrow(db),nrow(db)*porcentaje)
+train<-db[corte,]
+test<-db[-corte,]
+
+
+SvM<-svm(class~., data = train, scale = F)
+summary(SvM)
+
+```
+
+
+Con el modelo completamente hecho, procedemos a ver su precision: 
+
+```{r message=FALSE, warning=FALSE }
+predi_SVM<-predict(SvM,test[,1:2])
+confusionMatrix(test$class,predi_SVM)
+
+```
+
+Vemos que el modelo supero el 60%, para lo cual es algo conveniente dar como valido este modelo ya que se acerca de forma adecuada a lo teorico. 
+
+
+
+
+Ahora usaremos Random Forest: 
+
+```{r message=FALSE, warning=FALSE}
+library(randomForest)
+library(forcats)
+
+dbN <- db[, c("api","class")]
+dbN$new_api <- fct_lump(dbN$api, n = 50, other_level = "Otros")
+porcen<-0.7
+
+
+#Datos de entrenamiento y prueba
+corte2 <- sample(nrow(dbN),nrow(dbN)*porcen)
+train2<-dbN[corte2,]
+test2<-dbN[-corte2,]
+
+rf <- randomForest(class ~ new_api, data = train2, ntree = 500)
+print(rf)
+```
+
+Por ultimo, vemos su precision: 
+
+```{r message=FALSE, warning=FALSE}
+predi_RF<-predict(rf,test2[,1:3])
+confusionMatrix(test2$class,predi_RF)
+```
+
+Y como podemos observar, el modelo genero una precision de mas de 85%, dejandonos asi una precision mucho mayor al modelo anterior, podemos decir asi tambien, que este modelo supero los datos teoricos. 
